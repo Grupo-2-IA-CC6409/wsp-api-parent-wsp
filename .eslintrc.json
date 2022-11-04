@@ -11,6 +11,7 @@
         "ecmaVersion": "latest"
     },
     "rules": {
-      "semi": [2, "always"]
+      "semi": [2, "always"],
+      "indent": ["error", 2]
     }
 }
