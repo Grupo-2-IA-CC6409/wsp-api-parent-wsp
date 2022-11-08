@@ -32,6 +32,24 @@ fs.readdirSync(folder).forEach(file => {
   var client = new Client({
     authStrategy: new LocalAuth({ clientId: clientId }),
   });
+
+  var context = {client: client, qr: '', qr_timeouts: 0, status: 'connected'};
+  clients.set(clientId, context);
+
+  client.on('ready', () => {
+    console.log(`${clientId} ready`);
+  });
+
+  client.on('message', (msg) => {
+    var msgContent = msg.body;
+    console.log(`received msg: ${msgContent}`);
+    var json = {'message': msgContent};
+    axios.post('/predict', json)
+      .then((response) =>{
+        console.log(`is hate?: ${response.data.prediction.label} ${response.data.prediction.score}`);
+      });
+  });
+
   client.initialize();
 });
 
@@ -72,10 +90,12 @@ app.get('/qr-new', (req, res) => {
       context.client.destroy();
     }
     context.qr_timeouts++;
+    console.log(`qr for ${clientId}`);
   });
 
   client.on('ready', () => {
     context.status='connected';
+    console.log(`${clientId} ready`);
   });
 
   client.on('message', (msg) => {
