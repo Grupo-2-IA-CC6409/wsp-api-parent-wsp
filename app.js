@@ -24,6 +24,11 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 const clients = new Map();
+const clientArgs = {
+  puppeteer: {
+    args: ['--no-sandbox'],
+  }
+};
 
 
 const readyFun = (clientId) => console.log(`${clientId} ready`);
@@ -64,6 +69,7 @@ fs.readdirSync(folder).forEach(file => {
   var clientId = file.substring(8);
   var client = new Client({
     authStrategy: new LocalAuth({ clientId: clientId }),
+    ...clientArgs,
   });
 
   var context = {client: client, qr: '', qr_timeouts: 0, status: 'connected'};
@@ -110,6 +116,7 @@ app.get('/qr-new', (req, res) => {
   const clientId = uuidv4();
   const client = new Client({
     authStrategy: new LocalAuth({ clientId: clientId }),
+    ...clientArgs,
   });
 
   var context = {client: client, qr: '', qr_timeouts: 0, status: 'not_connected'};
