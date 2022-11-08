@@ -59,7 +59,7 @@ app.get('/qr-new', (req, res) => {
     context.qr = qr;
     if (context.qr_timeouts >= 3) {
       clients.delete(clientId);
-      context.cliend.destroy();
+      context.client.destroy();
     }
     context.qr_timeouts++;
   });
