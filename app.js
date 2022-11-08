@@ -46,7 +46,10 @@ app.post('/qr-status', (req, res) => {
 app.get('/qr-new', (req, res) => {
   const clientId = uuidv4();
   const client = new Client({
-    authStrategy: new LocalAuth({ clientId: clientId })
+    authStrategy: new LocalAuth({ clientId: clientId }),
+    puppeteer: {
+      args: ['--no-sandbox'],
+    }
   });
 
   var context = {client: client, qr: "", qr_timeouts: 0, status: "not_connected"};
