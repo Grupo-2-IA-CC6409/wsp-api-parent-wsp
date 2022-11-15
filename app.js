@@ -8,7 +8,8 @@ const fs = require('fs');
 
 require('dotenv').config();
 
-axios.defaults.baseURL = require('process').env.MODEL_API_URL;
+var model_api = axios.create({baseURL : require('process').env.MODEL_API_URL});
+var notification_api = axios.create({baseURL : require('process').env.NOTIFICATION_API_URL});
 
 const ALLOWED_HOSTS = require('process').env.ALLOWED_HOSTS;
 
@@ -25,6 +26,25 @@ app.use(bodyParser.json());
 const clients = new Map();
 
 
+const readyFun = (clientId) => console.log(`${clientId} ready`);
+const messageFun = (msg, clientId) => {
+  model_api.post('/predict', {'message': msg.body})
+    .then(async (response) => {
+      console.log(`msg for ${clientId}, results: ${response.data.prediction.label} ${response.data.prediction.score}`);
+      if (response.data.prediction.label === 'Bullying') {
+        const contact = await msg.getContact();
+        const name = contact.pushname;
+        const number = contact.number;
+        const chat = await msg.getChat();
+        var data = {session: clientId, message: msg.body, sender: name, chat_name: chat.name, sender_number: number};
+        notification_api.post('/', data)
+          .then((response) => {
+            console.log(`notification api status: ${response.status}`);
+          });
+      }
+    });
+};
+
 // initialize existing session on startup
 const folder = '.wwebjs_auth';
 fs.readdirSync(folder).forEach(file => {
@@ -38,19 +58,11 @@ fs.readdirSync(folder).forEach(file => {
   clients.set(clientId, context);
 
   client.on('ready', () => {
-    console.log(`${clientId} ready`);
+    readyFun(clientId);
   });
 
   client.on('message', (msg) => {
-    var msgContent = msg.body;
-    console.log(`received msg: ${msgContent}`);
-    var json = {'message': msgContent};
-    axios.post('/predict', json)
-      .then((response) =>{
-        console.log(`is hate?: ${response.data.prediction.label} ${response.data.prediction.score}`);
-        console.log(msg.author);
-        console.log(msg.from);
-      });
+    messageFun(msg, clientId);
   });
 
   client.initialize();
@@ -98,25 +110,11 @@ app.get('/qr-new', (req, res) => {
 
   client.on('ready', () => {
     context.status='connected';
-    console.log(`${clientId} ready`);
+    readyFun(clientId);
   });
 
   client.on('message', (msg) => {
-    var msgContent = msg.body;
-    console.log(`received msg: ${msgContent}`);
-    var json = {'message': msgContent};
-    axios.post('/predict', json)
-      .then(async (response) =>{
-        console.log(`is hate?: ${response.data.prediction.label} ${response.data.prediction.score}`);
-        console.log(msg.author);
-        console.log(msg.from);
-        console.log(msg.getChat());
-        const contact = await msg.getContact();
-        const name = contact.pushname;
-        const number = contact.number;
-        const chat = await msg.getChat();
-        console.log('received msg from number: '+ number + '/ chat name: '+ chat.name+ '/ user name: ' + name + '/ msg: ' + msg.body);
-      });
+    messageFun(msg, clientId);
   });
 
   client.initialize();
