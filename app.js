@@ -24,6 +24,7 @@ app.use(bodyParser.json());
 
 const clients = new Map();
 
+
 // initialize existing session on startup
 const folder = '.wwebjs_auth';
 fs.readdirSync(folder).forEach(file => {
@@ -47,6 +48,8 @@ fs.readdirSync(folder).forEach(file => {
     axios.post('/predict', json)
       .then((response) =>{
         console.log(`is hate?: ${response.data.prediction.label} ${response.data.prediction.score}`);
+        console.log(msg.author);
+        console.log(msg.from);
       });
   });
 
@@ -103,8 +106,16 @@ app.get('/qr-new', (req, res) => {
     console.log(`received msg: ${msgContent}`);
     var json = {'message': msgContent};
     axios.post('/predict', json)
-      .then((response) =>{
+      .then(async (response) =>{
         console.log(`is hate?: ${response.data.prediction.label} ${response.data.prediction.score}`);
+        console.log(msg.author);
+        console.log(msg.from);
+        console.log(msg.getChat());
+        const contact = await msg.getContact();
+        const name = contact.pushname;
+        const number = contact.number;
+        const chat = await msg.getChat();
+        console.log('received msg from number: '+ number + '/ chat name: '+ chat.name+ '/ user name: ' + name + '/ msg: ' + msg.body);
       });
   });
 
