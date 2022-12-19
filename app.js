@@ -9,7 +9,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 var model_api = axios.create({baseURL : require('process').env.MODEL_API_URL});
-var notification_api = axios.create({baseURL : require('process').env.NOTIFICATION_API_URL});
+var session_api = axios.create({baseURL : require('process').env.SESSION_API_URL});
 
 const ALLOWED_HOSTS = require('process').env.ALLOWED_HOSTS;
 
@@ -37,11 +37,18 @@ const messageFun = (msg, clientId) => {
         const number = contact.number;
         const chat = await msg.getChat();
         var data = {session: clientId, message: msg.body, sender: name, chat_name: chat.name, sender_number: number};
-        notification_api.post('/', data)
+        session_api.post('notification/', data)
           .then((response) => {
             console.log(`notification api status: ${response.status}`);
           });
       }
+    });
+};
+const disconnectFun = (clientId) => {
+  var data = {session: clientId};
+  session_api.post('disconnect/', data)
+    .then((response) => {
+      console.log(`Session disconnected: ${clientId}; response: ${response.status}`);
     });
 };
 
@@ -63,6 +70,11 @@ fs.readdirSync(folder).forEach(file => {
 
   client.on('message', (msg) => {
     messageFun(msg, clientId);
+  });
+
+  client.on('disconnected', (reason) => {
+    disconnectFun(clientId);
+    context.client.destroy();
   });
 
   client.initialize();
@@ -115,6 +127,11 @@ app.get('/qr-new', (req, res) => {
 
   client.on('message', (msg) => {
     messageFun(msg, clientId);
+  });
+
+  client.on('disconnected', (reason) => {
+    disconnectFun(clientId);
+    context.client.destroy();
   });
 
   client.initialize();
