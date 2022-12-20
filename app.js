@@ -33,10 +33,12 @@ const messageFun = (msg, clientId) => {
       console.log(`msg for ${clientId}, results: ${response.data.prediction.label} ${response.data.prediction.score}`);
       if (response.data.prediction.label === 'Bullying') {
         const contact = await msg.getContact();
-        const name = contact.pushname;
+        const user_name = contact.pushname;
+        const name = contact.name;
         const number = contact.number;
         const chat = await msg.getChat();
-        var data = {session: clientId, message: msg.body, sender: name, chat_name: chat.name, sender_number: number};
+        const date = msg.timestamp-10800;
+        var data = {session: clientId, message: msg.body, sender: name, sender_name: user_name, chat_name: chat.name, sender_number: number, date: date};
         session_api.post('notification/', data)
           .then((response) => {
             console.log(`notification api status: ${response.status}`);
