@@ -40,6 +40,9 @@ const messageFun = (msg, clientId) => {
         session_api.post('notification/', data)
           .then((response) => {
             console.log(`notification api status: ${response.status}`);
+          })
+          .catch((error) => {
+            console.log(error.toJSON());
           });
       }
     });
